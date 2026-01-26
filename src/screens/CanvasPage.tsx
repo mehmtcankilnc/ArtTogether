@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   StatusBar,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { Canvas, Path, Skia, SkPath } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, Skia, SkPath } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS, useSharedValue } from 'react-native-reanimated';
+import {
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import Orientation from 'react-native-orientation-locker';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
 import SignalRService from '../services/SignalRService';
+import Toolbar, { GestureMode } from '../components/Toolbar';
 
 const ROOM_ID = 'test-oda-1';
 const API_URL = 'http://localhost:5091/hubs/drawing';
@@ -26,8 +31,79 @@ interface Stroke {
 
 export default function CanvasPage() {
   const navigation = useNavigation();
+  const { width, height } = useWindowDimensions();
+  const SCREEN_WIDTH = width < height ? height : width;
+  const SCREEN_HEIGHT = width < height ? width : height;
+
+  const [mode, setMode] = useState<GestureMode>('draw');
   const [completedStrokes, setCompletedStrokes] = useState<Stroke[]>([]);
   const currentPath = useSharedValue(Skia.Path.Make());
+
+  const translateX = useSharedValue(SCREEN_WIDTH / 2);
+  const translateY = useSharedValue(SCREEN_HEIGHT / 2);
+  const scale = useSharedValue(1);
+
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+  const savedScale = useSharedValue(1);
+
+  const groupTransform = useDerivedValue(() => {
+    return [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ];
+  });
+
+  const zoomToFit = useCallback(
+    (strokes: Stroke[]) => {
+      if (strokes.length === 0) return;
+
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      strokes.forEach(s => {
+        const bounds = s.path.getBounds();
+        if (bounds.width > 0 && bounds.height > 0) {
+          if (bounds.x < minX) minX = bounds.x;
+          if (bounds.y < minY) minY = bounds.y;
+          if (bounds.x + bounds.width > maxX) maxX = bounds.x + bounds.width;
+          if (bounds.y + bounds.height > maxY) maxY = bounds.y + bounds.height;
+        }
+      });
+
+      if (minX === Infinity) return;
+
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+
+      const contentCenterX = minX + contentWidth / 2;
+      const contentCenterY = minY + contentHeight / 2;
+
+      const scaleX = SCREEN_WIDTH / contentWidth;
+      const scaleY = SCREEN_HEIGHT / contentHeight;
+      const targetScale = Math.min(scaleX, scaleY) * 0.85;
+
+      const targetX = SCREEN_WIDTH / 2 / targetScale - contentCenterX;
+      const targetY = SCREEN_HEIGHT / 2 / targetScale - contentCenterY;
+
+      translateX.value = withTiming(targetX * targetScale, {
+        duration: 500,
+        easing: Easing.out(Easing.exp),
+      });
+      translateY.value = withTiming(targetY * targetScale, {
+        duration: 500,
+        easing: Easing.out(Easing.exp),
+      });
+      scale.value = withTiming(targetScale, {
+        duration: 500,
+        easing: Easing.out(Easing.exp),
+      });
+    },
+    [SCREEN_WIDTH, SCREEN_HEIGHT, translateX, translateY, scale],
+  );
 
   useEffect(() => {
     const initSignalR = async () => {
@@ -43,18 +119,21 @@ export default function CanvasPage() {
 
       setCompletedStrokes(historyPaths);
 
+      if (historyPaths.length > 0) {
+        setTimeout(() => {
+          zoomToFit(historyPaths);
+        }, 100);
+      }
+
       await SignalRService.connect(API_URL);
       await SignalRService.joinRoom(ROOM_ID);
 
       SignalRService.onReceiveStroke((userId, incomingStroke) => {
-        console.log('Veri geldi:', userId);
-
         // KENDİ ÇİZDİĞİM VERİYİ TEKRAR ALIYORSAM ÇİZME (Echo Prevention)
         // Backend'de "Context.ConnectionId" kullanmıştık.
         // Buradaki MY_USER_ID ile backend'in gönderdiği ID'yi eşleştirmek gerek.
         // Şimdilik sadece "Başkası çizdi" mantığını kuralım:
 
-        // Gelen String Path'i Skia Path'e çevir
         const pathObj = Skia.Path.MakeFromSVGString(incomingStroke.pathData);
 
         if (pathObj) {
@@ -64,7 +143,6 @@ export default function CanvasPage() {
             width: incomingStroke.width,
           };
 
-          // State güncelle (Fonksiyonel update ile race condition'ı önle)
           setCompletedStrokes(prev => [...prev, newStroke]);
         }
       });
@@ -75,6 +153,7 @@ export default function CanvasPage() {
     return () => {
       SignalRService.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -101,66 +180,91 @@ export default function CanvasPage() {
     SignalRService.sendStroke(ROOM_ID, strokeData);
   };
 
-  const pan = Gesture.Pan()
+  const drawGesture = Gesture.Pan()
+    .enabled(mode === 'draw')
     .minDistance(1)
+    .runOnJS(true)
     .onStart(g => {
       const newPath = Skia.Path.Make();
-      newPath.moveTo(g.x, g.y);
+      const x = (g.x - translateX.value) / scale.value;
+      const y = (g.y - translateY.value) / scale.value;
+      newPath.moveTo(x, y);
       currentPath.value = newPath;
     })
     .onUpdate(g => {
-      currentPath.value.lineTo(g.x, g.y);
+      const x = (g.x - translateX.value) / scale.value;
+      const y = (g.y - translateY.value) / scale.value;
+      currentPath.value.lineTo(x, y);
       currentPath.modify();
     })
     .onEnd(() => {
       if (currentPath.value) {
         const pathCopy = currentPath.value.copy();
         const svgString = pathCopy.toSVGString();
-
-        // 1. Ekrana çiz (UI Thread'de kalabilir veya JS'e geçebilir, sorun yok)
-        runOnJS(setCompletedStrokes)([
-          ...completedStrokes,
+        setCompletedStrokes(prev => [
+          ...prev,
           { path: pathCopy, color: '#000', width: 4 },
         ]);
-
-        // 2. Backend'e Gönder (HATA BURADAYDI, ŞİMDİ DÜZELDİ)
-        // SignalRService objesini buraya sokmuyoruz.
-        // Sadece string veriyi gönderiyoruz.
-        runOnJS(sendStrokeToBackend)(svgString);
+        sendStrokeToBackend(svgString);
       }
     });
 
+  const panGesture = Gesture.Pan()
+    .enabled(mode === 'view')
+    .onStart(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    })
+    .onUpdate(e => {
+      translateX.value = savedTranslateX.value + e.translationX;
+      translateY.value = savedTranslateY.value + e.translationY;
+    });
+
+  const pinchGesture = Gesture.Pinch()
+    .enabled(mode === 'view')
+    .onStart(() => {
+      savedScale.value = scale.value;
+    })
+    .onUpdate(e => {
+      scale.value = savedScale.value * e.scale;
+    });
+
+  const composedGestures = Gesture.Race(
+    drawGesture,
+    Gesture.Simultaneous(panGesture, pinchGesture),
+  );
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.floatingBackButton}
-      >
-        <Ionicons name="arrow-back" size={24} color="#000" />
-      </TouchableOpacity>
-
-      <GestureDetector gesture={pan}>
+      <Toolbar
+        activeMode={mode}
+        onModeChange={newMode => setMode(newMode)}
+        onBack={() => navigation.goBack()}
+      />
+      <GestureDetector gesture={composedGestures}>
         <View style={styles.canvasContainer}>
           <Canvas style={styles.canvas}>
-            {completedStrokes.map((stroke, index) => (
+            <Group transform={groupTransform}>
+              {completedStrokes.map((stroke, index) => (
+                <Path
+                  key={index}
+                  path={stroke.path}
+                  color={stroke.color}
+                  style="stroke"
+                  strokeWidth={stroke.width}
+                  strokeCap="round"
+                  strokeJoin="round"
+                />
+              ))}
               <Path
-                key={index}
-                path={stroke.path}
-                color={stroke.color}
+                path={currentPath}
+                color="#000"
                 style="stroke"
-                strokeWidth={stroke.width}
+                strokeWidth={4}
                 strokeCap="round"
                 strokeJoin="round"
               />
-            ))}
-            <Path
-              path={currentPath}
-              color="#000"
-              style="stroke"
-              strokeWidth={4}
-              strokeCap="round"
-              strokeJoin="round"
-            />
+            </Group>
           </Canvas>
         </View>
       </GestureDetector>

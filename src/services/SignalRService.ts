@@ -32,9 +32,8 @@ class SignalRService {
 
     try {
       await this.connection.start();
-      console.log('SignalR Connected! ✅');
     } catch (err) {
-      console.error('SignalR Connection Failed ❌', err);
+      console.error('SignalR Connection Failed: ', err);
     }
   }
 
@@ -49,7 +48,7 @@ class SignalRService {
       try {
         await this.connection.invoke('SendStroke', roomId, stroke);
       } catch (err) {
-        console.error('SendStroke Error:', err);
+        console.error('SendStroke Error: ', err);
       }
     }
   }
