@@ -1,8 +1,11 @@
+import { API_BASE_URL } from '@env';
 import {
+  HttpTransportType,
   HubConnection,
   HubConnectionBuilder,
   LogLevel,
 } from '@microsoft/signalr';
+import { Storage } from '../utils/storage';
 
 export interface StrokeDto {
   color: string;
@@ -25,7 +28,13 @@ class SignalRService {
     if (this.connection) return;
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(url)
+      .withUrl(url, {
+        accessTokenFactory: () => {
+          const token = Storage.getAccessToken();
+          return token ? token : '';
+        },
+        transport: HttpTransportType.WebSockets,
+      })
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect()
       .build();
@@ -43,10 +52,10 @@ class SignalRService {
     }
   }
 
-  public async sendStroke(roomId: string, stroke: StrokeDto) {
+  public async sendStroke(projectId: string, stroke: StrokeDto) {
     if (this.connection) {
       try {
-        await this.connection.invoke('SendStroke', roomId, stroke);
+        await this.connection.invoke('SendStroke', projectId, stroke);
       } catch (err) {
         console.error('SendStroke Error: ', err);
       }
@@ -72,15 +81,9 @@ class SignalRService {
     }
   }
 
-  public async getHistory(roomId: string): Promise<StrokeDto[]> {
+  public async getHistory(projectId: string): Promise<StrokeDto[]> {
     try {
-      // API_URL örnek: http://localhost:5000/hubs/drawing
-      // Hedef URL: http://localhost:5000/api/strokes/{roomId}
-
-      // Basit bir string replace ile Base URL'i buluyoruz
-      const baseUrl = 'http://localhost:5091'; // Burayı kendi IP ayarına göre dinamik yapabilirsin
-
-      const response = await fetch(`${baseUrl}/api/strokes/${roomId}`);
+      const response = await fetch(`${API_BASE_URL}/api/strokes/${projectId}`);
       if (!response.ok) throw new Error('Geçmiş yüklenemedi');
 
       return await response.json();

@@ -15,7 +15,7 @@ export const useResponsive = () => {
     [isSmallScreen],
   );
 
-  const iconSize = rs(30);
+  const iconSize = rs(32);
 
   return { rs, iconSize };
 };

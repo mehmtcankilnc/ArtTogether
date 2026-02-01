@@ -1,119 +1,228 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, Text, Pressable } from 'react-native';
-import React from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useResponsive } from '../hooks/useResponsive';
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
+  Easing,
+  withDelay,
+  interpolate,
+  Extrapolation,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 
-type Props = {};
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export default function FloatingActionButton({}: Props) {
-  const { rs } = useResponsive();
+type Props = {
+  createNewWhiteBoard: () => void;
+  createNewPixelBoard: () => void;
+};
 
-  const width = useSharedValue(rs(50));
-  const height = useSharedValue(rs(50));
-  const borderRadius = useSharedValue(rs(40));
+export default function FloatingActionButton({
+  createNewWhiteBoard,
+  createNewPixelBoard,
+}: Props) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const ICON_SIZE = 64;
+
+  // const firstValue = useSharedValue(32);
+  const secondValue = useSharedValue(32);
+  const thirdValue = useSharedValue(32);
+
+  // const firstWidth = useSharedValue(ICON_SIZE);
+  const secondWidth = useSharedValue(ICON_SIZE);
+  const thirdWidth = useSharedValue(ICON_SIZE);
+
   const isOpen = useSharedValue(false);
+  const opacity = useSharedValue(0);
+
   const progress = useDerivedValue(() =>
     isOpen.value ? withTiming(1) : withTiming(0),
   );
 
   const handlePress = () => {
-    if (!isOpen.value) {
-      width.value = withSpring(rs(180));
-      height.value = withSpring(rs(180));
-      borderRadius.value = withSpring(rs(10));
-      isOpen.value = true;
+    const config = {
+      easing: Easing.bezier(0.68, -0.6, 0.32, 1.6),
+      duration: 500,
+    };
+
+    setIsMenuOpen(!isOpen.value);
+
+    if (isOpen.value) {
+      // firstWidth.value = withTiming(ICON_SIZE, { duration: 100 }, finish => {
+      //   if (finish) firstValue.value = withTiming(32, config);
+      // });
+      secondWidth.value = withTiming(ICON_SIZE, { duration: 100 }, finish => {
+        if (finish) secondValue.value = withDelay(50, withTiming(32, config));
+      });
+      thirdWidth.value = withTiming(ICON_SIZE, { duration: 100 }, finish => {
+        if (finish) thirdValue.value = withDelay(100, withTiming(32, config));
+      });
+      opacity.value = withTiming(0, { duration: 100 });
     } else {
-      width.value = withTiming(rs(50));
-      height.value = withTiming(rs(50));
-      borderRadius.value = withTiming(rs(40));
-      isOpen.value = false;
+      // firstValue.value = withDelay(200, withSpring(130));
+      secondValue.value = withDelay(100, withSpring(130)); // 210
+      thirdValue.value = withSpring(210); // 290
+
+      // firstWidth.value = withDelay(600, withSpring(200));
+      secondWidth.value = withDelay(550, withSpring(200));
+      thirdWidth.value = withDelay(500, withSpring(200));
+
+      opacity.value = withDelay(600, withSpring(1));
+    }
+
+    isOpen.value = !isOpen.value;
+  };
+
+  const handleBackdropPress = () => {
+    if (isMenuOpen) {
+      handlePress();
     }
   };
 
-  const plusIcon = useAnimatedStyle(() => {
+  const onMenuItemPress = (action?: () => void) => {
+    handlePress();
+    if (action) {
+      setTimeout(() => action(), 100);
+    }
+  };
+
+  const opacityText = useAnimatedStyle(() => {
     return {
-      transform: [{ rotate: `${progress.value * 45}deg` }],
+      opacity: opacity.value,
     };
   });
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      width: width.value,
-      height: height.value,
-      borderRadius: borderRadius.value,
-    };
+  // const firstWidthStyle = useAnimatedStyle(() => {
+  //   return { width: firstWidth.value };
+  // });
+
+  const secondWidthStyle = useAnimatedStyle(() => {
+    return { width: secondWidth.value };
   });
+
+  const thirdWidthStyle = useAnimatedStyle(() => {
+    return { width: thirdWidth.value };
+  });
+
+  // const firstIcon = useAnimatedStyle(() => {
+  //   const scale = interpolate(
+  //     firstValue.value,
+  //     [32, 130],
+  //     [0, 1],
+  //     Extrapolation.CLAMP,
+  //   );
+  //   return { bottom: firstValue.value, transform: [{ scale: scale }] };
+  // });
+
+  const secondIcon = useAnimatedStyle(() => {
+    const scale = interpolate(
+      secondValue.value,
+      [32, 130], //210
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    return { bottom: secondValue.value, transform: [{ scale: scale }] };
+  });
+
+  const thirdIcon = useAnimatedStyle(() => {
+    const scale = interpolate(
+      thirdValue.value,
+      [32, 210], //290
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    return { bottom: thirdValue.value, transform: [{ scale: scale }] };
+  });
+
+  const plusIcon = useAnimatedStyle(() => {
+    return { transform: [{ rotate: `${progress.value * 45}deg` }] };
+  });
+
+  const itemClassName =
+    'bg-action absolute bottom-8 right-8 rounded-2xl flex-row items-center overflow-hidden h-16 items-center';
 
   return (
-    <View className="flex-1">
-      <Animated.View
-        className="absolute bg-action overflow-hidden"
-        style={[{ bottom: rs(20), right: rs(20) }, animatedStyle]}
+    <>
+      {isMenuOpen && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: 'rgba(0,0,0,0.2)', zIndex: 1 },
+          ]}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={handleBackdropPress}
+          />
+        </Animated.View>
+      )}
+      <AnimatedPressable
+        onPress={() => onMenuItemPress(createNewWhiteBoard)}
+        className={itemClassName}
+        style={[thirdIcon, thirdWidthStyle, { zIndex: 2 }]}
       >
-        <Pressable
-          onPress={handlePress}
-          className="items-center justify-center"
-          style={{ width: rs(50), height: rs(50), borderRadius: rs(40) }}
-        >
-          <Animated.View
-            className="items-center justify-center"
-            style={[
-              { width: rs(50), height: rs(50), borderRadius: rs(40) },
-              plusIcon,
-            ]}
-          >
-            <Ionicons name="add-outline" size={rs(40)} color="white" />
-          </Animated.View>
-        </Pressable>
-        <View
-          className="flex-row items-center overflow-hidden"
-          style={{ paddingHorizontal: rs(8), gap: rs(4) }}
-        >
-          <View
-            className="items-center justify-center"
-            style={{ width: rs(50), height: rs(50), borderRadius: rs(40) }}
-          >
-            <Ionicons name="document-outline" size={rs(40)} color="white" />
-          </View>
-          <Text
-            style={{
-              fontFamily: 'Nunito-Medium',
-              fontSize: rs(16),
-              color: 'white',
-            }}
-          >
-            New Project
-          </Text>
+        <View className="w-16 h-16 justify-center items-center">
+          <Ionicons name="easel-outline" size={30} color="#1F1F1F" />
         </View>
-        <View
-          className="flex-row items-center overflow-hidden"
-          style={{ paddingHorizontal: rs(8), gap: rs(4) }}
+        <Animated.Text
+          style={[
+            { fontFamily: 'Nunito-Medium', fontSize: 16, color: '#1F1F1F' },
+            opacityText,
+          ]}
+          numberOfLines={1}
         >
-          <View
-            className="items-center justify-center"
-            style={{ width: rs(50), height: rs(50), borderRadius: rs(40) }}
-          >
-            <Ionicons name="folder-open-outline" size={rs(40)} color="white" />
-          </View>
-          <Text
-            style={{
-              fontFamily: 'Nunito-Medium',
-              fontSize: rs(16),
-              color: 'white',
-            }}
-          >
-            New Project
-          </Text>
+          New White Board
+        </Animated.Text>
+      </AnimatedPressable>
+      <AnimatedPressable
+        onPress={() => onMenuItemPress(createNewPixelBoard)}
+        className={itemClassName}
+        style={[secondIcon, secondWidthStyle, { zIndex: 2 }]}
+      >
+        <View className="w-16 h-16 justify-center items-center">
+          <Ionicons name="grid-outline" size={30} color="#1F1F1F" />
         </View>
-      </Animated.View>
-    </View>
+        <Animated.Text
+          style={[
+            { fontFamily: 'Nunito-Medium', fontSize: 16, color: '#1F1F1F' },
+            opacityText,
+          ]}
+          numberOfLines={1}
+        >
+          New Pixel Board
+        </Animated.Text>
+      </AnimatedPressable>
+      {/* <Animated.View
+        className={itemClassName}
+        style={[firstIcon, firstWidthStyle, { zIndex: 2 }]}
+      >
+        <View className="w-16 h-16 justify-center items-center">
+          <Ionicons name="folder-open-outline" size={30} color="white" />
+        </View>
+        <Animated.Text
+          className="text-white text-lg"
+          style={opacityText}
+          numberOfLines={1}
+        >
+          New Project
+        </Animated.Text>
+      </Animated.View> */}
+      <AnimatedPressable
+        onPress={handlePress}
+        className="bg-action absolute bottom-8 right-8 rounded-2xl h-16 w-16 justify-center items-center"
+        style={[{ zIndex: 2 }, plusIcon]}
+      >
+        <Ionicons name="add-outline" size={30} color="#1F1F1F" />
+      </AnimatedPressable>
+    </>
   );
 }

@@ -1,89 +1,83 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, Text, Image, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { Project } from '../data/types';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+type Props = {
+  project: Project;
+};
 
-export default function ProjectCard() {
+export default function ProjectCard({ project }: Props) {
   const { rs } = useResponsive();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  const onPressIn = () => {
-    scale.value = withSpring(0.95, { damping: 10, stiffness: 100 });
-  };
-
-  const onPressOut = () => {
-    scale.value = withSpring(1, { damping: 10, stiffness: 100 });
-  };
-
   return (
-    <AnimatedPressable
-      onPress={() => {
-        onPressIn();
-        navigation.navigate('Canvas', { projectId: '123' });
+    <Pressable
+      onPress={() =>
+        navigation.navigate('Canvas', { projectId: project.projectId })
+      }
+      className="bg-secondaryBg rounded-2xl justify-center"
+      style={{
+        width: rs(160),
+        height: rs(160),
+        paddingHorizontal: rs(12),
+        gap: rs(6),
       }}
-      onPressOut={onPressOut}
-      className="w-full bg-white rounded-lg elevation-md flex-row items-center justify-between"
-      style={[{ padding: rs(20), gap: rs(20) }, animatedStyle]}
     >
-      <Image
-        source={{
-          uri: 'https://media.istockphoto.com/id/1147544807/vector/thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=rnCKVbdxqkjlcs3xH87-9gocETqpspHFXu5dIGB4wuM=',
-        }}
-        style={{ width: 100, height: 100, borderRadius: 4 }}
-      />
-      <View className="flex-1" style={{ gap: rs(16) }}>
-        <Text style={{ fontFamily: 'Nunito-SemiBold', fontSize: rs(20) }}>
-          Project Title
+      <View className="flex-row justify-between items-center">
+        <Text
+          style={{
+            fontFamily: 'Nunito-SemiBold',
+            fontSize: 14,
+            color: '#1F1F1F',
+          }}
+        >
+          {project.projectName ?? 'Project Title'}
         </Text>
-        <View style={{ gap: rs(6) }}>
+        <Ionicons name="heart-outline" size={16} color="#1F1F1F" />
+      </View>
+      <View className="w-full items-center">
+        <Ionicons name="images-outline" size={48} color="#1F1F1F" />
+      </View>
+      <View className="flex-row justify-between items-center">
+        <View>
           <View className="flex-row items-center" style={{ gap: rs(6) }}>
-            <Ionicons name="time-outline" size={rs(16)} color="#666" />
+            <Ionicons name="people-outline" size={16} color="#1F1F1F" />
             <Text
               style={{
                 fontFamily: 'Nunito-Regular',
-                fontSize: rs(14),
-                color: '#666',
+                fontSize: 10,
+                color: '#1F1F1F',
               }}
             >
-              2 hours ago
+              4 people
             </Text>
           </View>
-
           <View className="flex-row items-center" style={{ gap: rs(6) }}>
-            <Ionicons name="people-outline" size={rs(16)} color="#666" />
+            <Ionicons name="time-outline" size={16} color="#1F1F1F" />
             <Text
               style={{
                 fontFamily: 'Nunito-Regular',
-                fontSize: rs(14),
-                color: '#666',
+                fontSize: 10,
+                color: '#1F1F1F',
               }}
             >
-              3 people
+              8 hours ago
             </Text>
           </View>
         </View>
+        <Ionicons
+          name="chevron-forward-circle-outline"
+          size={24}
+          color="#1F1F1F"
+        />
       </View>
-      <Ionicons name="chevron-forward" size={24} color="#ec6426" />
-    </AnimatedPressable>
+    </Pressable>
   );
 }

@@ -2,6 +2,10 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/Nunito-ExtraBold.ttf",
+      "sha1": "37ba2b2e9e7dd74a67b8b994a1aebe333af7fc39"
+    },
+    {
       "path": "src/assets/fonts/Nunito-Medium.ttf",
       "sha1": "75324fedc01df018cdf436bb5beba504bd82af0d"
     },
@@ -12,18 +16,6 @@
     {
       "path": "src/assets/fonts/Nunito-SemiBold.ttf",
       "sha1": "c4a5281a3e088e1d2604635d4d09a1583d036db6"
-    },
-    {
-      "path": "src/assets/fonts/PlusJakartaSans-Medium.ttf",
-      "sha1": "c328c76cab7078b89d925d73809f03c12a00143a"
-    },
-    {
-      "path": "src/assets/fonts/PlusJakartaSans-Regular.ttf",
-      "sha1": "ea07d33f23fb6c4856a642d035c463dc99a7f88a"
-    },
-    {
-      "path": "src/assets/fonts/PlusJakartaSans-SemiBold.ttf",
-      "sha1": "576ccf10be11652fc309f3682a327a98847c596e"
     }
   ]
 }

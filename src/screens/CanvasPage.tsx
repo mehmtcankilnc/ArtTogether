@@ -19,9 +19,7 @@ import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useNavigation } from '@react-navigation/native';
 import SignalRService from '../services/SignalRService';
 import Toolbar, { GestureMode } from '../components/Toolbar';
-
-const ROOM_ID = 'test-oda-1';
-const API_URL = 'http://localhost:5091/hubs/drawing';
+import { API_BASE_URL } from '@env';
 
 interface Stroke {
   path: SkPath;
@@ -29,8 +27,9 @@ interface Stroke {
   width: number;
 }
 
-export default function CanvasPage() {
+export default function CanvasPage({ route }: any) {
   const navigation = useNavigation();
+  const { projectId } = route.params;
   const { width, height } = useWindowDimensions();
   const SCREEN_WIDTH = width < height ? height : width;
   const SCREEN_HEIGHT = width < height ? width : height;
@@ -107,7 +106,7 @@ export default function CanvasPage() {
 
   useEffect(() => {
     const initSignalR = async () => {
-      const history = await SignalRService.getHistory(ROOM_ID);
+      const history = await SignalRService.getHistory(projectId);
 
       const historyPaths = history
         .map(h => ({
@@ -125,8 +124,8 @@ export default function CanvasPage() {
         }, 100);
       }
 
-      await SignalRService.connect(API_URL);
-      await SignalRService.joinRoom(ROOM_ID);
+      await SignalRService.connect(`${API_BASE_URL}/hubs/drawing`);
+      await SignalRService.joinRoom(projectId);
 
       SignalRService.onReceiveStroke((userId, incomingStroke) => {
         // KENDİ ÇİZDİĞİM VERİYİ TEKRAR ALIYORSAM ÇİZME (Echo Prevention)
@@ -177,7 +176,7 @@ export default function CanvasPage() {
       pathData: pathString,
     };
 
-    SignalRService.sendStroke(ROOM_ID, strokeData);
+    SignalRService.sendStroke(projectId, strokeData);
   };
 
   const drawGesture = Gesture.Pan()

@@ -25,28 +25,13 @@ export default function SearchBar({
       style={{
         width: '100%',
         height: rs(50),
-        backgroundColor: '#fcefe6',
-        borderRadius: rs(24),
-        elevation: 4,
+        backgroundColor: '#FDFDFD',
+        borderRadius: rs(12),
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: rs(12),
       }}
     >
-      <TextInput
-        style={{
-          flex: 1,
-          height: '100%',
-          color: '#ec6426',
-          fontFamily: 'Nunito-Medium',
-        }}
-        placeholder={placeholder}
-        placeholderTextColor={'#ec6426'}
-        value={value}
-        onChangeText={handleTextChange}
-        cursorColor={'#ec6426'}
-      />
-
       {rightIcon && (
         <TouchableOpacity
           onPress={onRightIconPress}
@@ -56,6 +41,19 @@ export default function SearchBar({
           {rightIcon}
         </TouchableOpacity>
       )}
+      <TextInput
+        style={{
+          flex: 1,
+          height: '100%',
+          color: '#1F1F1F',
+          fontFamily: 'Nunito-Regular',
+        }}
+        placeholder={placeholder}
+        placeholderTextColor={'#1F1F1F'}
+        value={value}
+        onChangeText={handleTextChange}
+        cursorColor={'#1F1F1F'}
+      />
     </View>
   );
 }

@@ -1,21 +1,44 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, StatusBar, Platform, Pressable, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+/* eslint-disable react-native/no-inline-styles */
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  StatusBar,
+  Platform,
+  Pressable,
+  Text,
+  FlatList,
+} from 'react-native';
 import { useResponsive } from '../hooks/useResponsive';
 import Header from '../components/Header';
-import SearchBar from '../components/SearchBar';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import ProjectCard from '../components/ProjectCard';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import FloatingActionButton from '../components/FloatingActionButton';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { GOOGLE_CLIENT_ID } from '@env';
+import { Storage } from '../utils/storage';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
+import CreatedProjectModal from '../components/CreatedProjectModal';
+import CreateModal from '../components/CreateModal';
+import { useAuth } from '../context/AuthContext';
+import { Project } from '../data/types';
+import Page from '../components/Page';
+import UpperTabs from '../components/UpperTabs';
 
 export default function HomePage() {
   const { rs } = useResponsive();
+  const { accessToken, authenticatedFetch } = useAuth();
   const [searchText, setSearchText] = useState('');
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  const [createVisible, setCreateVisible] = useState(false);
+
+  const [createdModalVisible, setCreatedModalVisible] = useState(false);
+  const [createdProjectName, setCreatedProjectName] = useState('');
+  const [createdInvitationLink, setCreatedInvitationLink] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -27,41 +50,53 @@ export default function HomePage() {
         SystemNavigationBar.navigationShow();
         SystemNavigationBar.setNavigationColor('transparent');
       }
-    }, []),
+
+      const fetchProjects = async () => {
+        try {
+          const response = await authenticatedFetch('/project', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            return false;
+          } else {
+            const data = await response.json();
+            console.log(data);
+            setProjects(data);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      fetchProjects();
+    }, [accessToken, authenticatedFetch]),
   );
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: GOOGLE_CLIENT_ID,
-      offlineAccess: true,
-    });
-  }, []);
-
-  const handleGoogleSignin = async () => {
+  const handleCreateNewWhiteBoardProject = async (projectName: string) => {
     try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
-
-      if (!idToken) console.error('id token bulunamadı');
-
-      const response = await fetch(
-        'http://localhost:5091/api/auth/google-signin',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ idToken }),
+      const response = await authenticatedFetch('/project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+        body: JSON.stringify(projectName),
+      });
 
       if (!response.ok) {
         return false;
       } else {
-        console.log('google sign in başarılı');
-        const tokenData = response.json();
-        console.log(tokenData);
+        const data = await response.json();
+        console.log(data);
+        setCreatedProjectName(data.projectName);
+        setCreatedInvitationLink(data.invitationUrl);
+        setCreatedModalVisible(true);
+        setProjects(prev => [...prev, data]);
       }
     } catch (error) {
       console.error(error);
@@ -69,27 +104,69 @@ export default function HomePage() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-main"
-      style={{ padding: rs(20), gap: rs(20) }}
-      edges={['top', 'bottom']}
-    >
-      <Header />
-      <View style={{ gap: rs(20) }}>
-        <SearchBar
-          placeholder="Search projects..."
-          value={searchText}
-          handleTextChange={(text: string) => setSearchText(text)}
-          rightIcon={<Ionicons name="search" size={24} color="#ec6426" />}
+    <View className="flex-1 bg-main">
+      <Header
+        searchText={searchText}
+        setSearchText={text => setSearchText(text)}
+      />
+      <Page>
+        <View style={{ gap: rs(20) }}>
+          <UpperTabs />
+          <Pressable
+            onPress={() => {
+              Storage.clearAll();
+              navigation.replace('Onboarding');
+            }}
+          >
+            <Text>Reset Auth</Text>
+          </Pressable>
+          <Pressable onPress={() => setCreatedModalVisible(true)}>
+            <Text>debug modal</Text>
+          </Pressable>
+          <FlatList
+            data={projects}
+            keyExtractor={project => project.projectId}
+            renderItem={({ item: project }) => (
+              <ProjectCard key={project.projectId} project={project} />
+            )}
+            contentContainerStyle={{
+              paddingBottom: rs(120),
+              padding: rs(12),
+              flexGrow: 1,
+              gap: rs(24),
+            }}
+          />
+        </View>
+      </Page>
+      {createVisible && (
+        <CreateModal
+          projectType="whiteboard"
+          handleDismiss={() => setCreateVisible(false)}
+          handleCreateWhiteBoard={projectName =>
+            handleCreateNewWhiteBoardProject(projectName)
+          }
+          // handleCreatePixelBoard={projectName =>
+          //   handleCreateNewPixelBoardProject(projectName)
+          // }
         />
-        {Array.from([1, 2], index => (
-          <ProjectCard key={index} />
-        ))}
-      </View>
-      <Pressable onPress={handleGoogleSignin}>
-        <Text>Google Sign In</Text>
-      </Pressable>
-      <FloatingActionButton />
-    </SafeAreaView>
+      )}
+      {createdModalVisible && (
+        <CreatedProjectModal
+          handleDismiss={() => {
+            setCreatedModalVisible(false);
+            setCreatedProjectName('');
+            setCreatedInvitationLink('');
+          }}
+          projectName={createdProjectName}
+          invitationLink={createdInvitationLink}
+        />
+      )}
+      <FloatingActionButton
+        createNewWhiteBoard={() => setCreateVisible(true)}
+        createNewPixelBoard={function (): void {
+          throw new Error('Function not implemented.');
+        }}
+      />
+    </View>
   );
 }
