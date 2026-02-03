@@ -52,7 +52,9 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>Nunito-ExtraBold.ttf</string>
+		<string>Nunito-LightItalic.ttf</string>
 		<string>Nunito-Medium.ttf</string>
+		<string>Nunito-MediumItalic.ttf</string>
 		<string>Nunito-Regular.ttf</string>
 		<string>Nunito-SemiBold.ttf</string>
 	</array>

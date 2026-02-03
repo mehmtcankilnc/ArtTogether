@@ -36,7 +36,9 @@ export default function ProjectCard({ project }: Props) {
             fontFamily: 'Nunito-SemiBold',
             fontSize: 14,
             color: '#1F1F1F',
+            maxWidth: rs(100),
           }}
+          numberOfLines={1}
         >
           {project.projectName ?? 'Project Title'}
         </Text>

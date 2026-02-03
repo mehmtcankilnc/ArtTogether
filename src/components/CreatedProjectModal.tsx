@@ -2,9 +2,9 @@
 import { View, Text, Pressable } from 'react-native';
 import React, { useState } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import Button from './Button';
 import Clipboard from '@react-native-clipboard/clipboard';
+import LinearGradient from 'react-native-linear-gradient';
 
 type Props = {
   handleDismiss: () => void;
@@ -36,33 +36,36 @@ export default function CreatedProjectModal({
         setIsCopied(false);
         handleDismiss();
       }}
-      className="absolute top-0 bottom-0 right-0 left-0 flex-1 bg-black/15 items-center justify-center"
+      className="absolute top-0 bottom-0 right-0 left-0 flex-1 bg-black/30 items-center justify-center"
     >
       <Pressable
-        className="bg-main rounded-lg border border-[#2ECC71] items-center"
-        style={{ width: rs(350), height: rs(400), padding: rs(20) }}
+        className="bg-pageBg"
+        style={{ width: rs(350), borderRadius: 16 }}
       >
-        <View
-          className="absolute bg-main border-2 border-[#2ECC71] rounded-full"
-          style={{ padding: rs(8), top: -rs(38) }}
+        <LinearGradient
+          colors={['#AFB8CB', '#EFC130', '#AFB8CB']}
+          start={{ x: 0, y: 0.5 }}
+          locations={[0, 0.5, 1]}
+          end={{ x: 1, y: 0.5 }}
+          className="w-full items-center justify-center"
+          style={{
+            paddingVertical: rs(20),
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}
         >
-          <Ionicons
-            name="checkmark-done-outline"
-            size={rs(60)}
-            color="#2ECC71"
-          />
-        </View>
-        <View style={{ marginTop: rs(38), gap: rs(30) }}>
           <Text
             style={{
               fontFamily: 'Nunito-SemiBold',
-              fontSize: rs(26),
-              textAlign: 'center',
+              fontSize: 18,
+              color: '#FDFDFD',
             }}
           >
             Project Created!
           </Text>
-          <View style={{ gap: rs(12) }}>
+        </LinearGradient>
+        <View style={{ padding: rs(12), gap: rs(30) }}>
+          <View style={{ gap: rs(30) }}>
             <Text
               style={{
                 fontFamily: 'Nunito-Regular',
@@ -73,7 +76,7 @@ export default function CreatedProjectModal({
               Your project{' '}
               <Text
                 style={{
-                  fontFamily: 'Nunito-SemiBold',
+                  fontFamily: 'Nunito-ExtraBold',
                   textDecorationLine: 'underline',
                 }}
               >
@@ -114,9 +117,9 @@ export default function CreatedProjectModal({
               >
                 <Text
                   style={{
-                    fontFamily: 'Nunito-Medium',
-                    fontSize: rs(14),
-                    color: 'white',
+                    fontFamily: 'Nunito-SemiBold',
+                    fontSize: 14,
+                    color: '#FDFDFD',
                   }}
                 >
                   {isCopied ? 'Copied' : 'Copy'}
@@ -124,8 +127,8 @@ export default function CreatedProjectModal({
               </Pressable>
             </View>
           </View>
-          <View className="flex-1 justify-end">
-            <Button handleSubmit={handleDismiss} text="Done" />
+          <View className="items-center">
+            <Button handleSubmit={handleDismiss} text="Done" type="submit" />
           </View>
         </View>
       </Pressable>

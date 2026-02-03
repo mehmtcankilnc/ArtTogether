@@ -8,6 +8,7 @@ module.exports = {
         action: '#EFC130',
         pageBg: '#FDFDFD',
         secondaryBg: '#FFF9E6',
+        buttonBg: '#2D5A7B',
       },
     },
   },

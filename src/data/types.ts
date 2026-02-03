@@ -7,3 +7,10 @@ export type Project = {
   updatedAt: Date;
   isOwner: boolean;
 };
+
+export type CreateProjectDto = {
+  projectName: string;
+  projectWidth: string;
+  projectHeight: string;
+  backgroundColor: string;
+};

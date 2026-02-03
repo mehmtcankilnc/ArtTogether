@@ -156,7 +156,7 @@ export default function FloatingActionButton({
           exiting={FadeOut.duration(200)}
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: 'rgba(0,0,0,0.2)', zIndex: 1 },
+            { backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 1 },
           ]}
         >
           <Pressable

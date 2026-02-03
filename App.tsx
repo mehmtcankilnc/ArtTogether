@@ -16,7 +16,7 @@ export default function App() {
             style={{ flex: 1, backgroundColor: '#FDFDFD' }}
             edges={['bottom', 'left', 'right']}
           >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle="dark-content" />
             <NavigationContainer>
               <AppStack />
             </NavigationContainer>

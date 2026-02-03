@@ -3,4 +3,5 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Home: undefined;
   Canvas: { projectId: string };
+  Notifications: undefined;
 };

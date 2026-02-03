@@ -7,6 +7,7 @@ import {
   Pressable,
   Text,
   FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import { useResponsive } from '../hooks/useResponsive';
 import Header from '../components/Header';
@@ -21,16 +22,57 @@ import { RootStackParamList } from '../navigation/types';
 import CreatedProjectModal from '../components/CreatedProjectModal';
 import CreateModal from '../components/CreateModal';
 import { useAuth } from '../context/AuthContext';
-import { Project } from '../data/types';
+import { CreateProjectDto, Project } from '../data/types';
 import Page from '../components/Page';
 import UpperTabs from '../components/UpperTabs';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import Overlay from '../components/Overlay';
+import Drawer from '../components/Drawer';
 
 export default function HomePage() {
   const { rs } = useResponsive();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { accessToken, authenticatedFetch } = useAuth();
   const [searchText, setSearchText] = useState('');
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const active = useSharedValue(false);
+  const progress = useDerivedValue(() => {
+    return withTiming(active.value ? 1 : 0);
+  });
+  const moveX = SCREEN_WIDTH * -0.6;
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const rotateY = interpolate(
+      progress.value,
+      [0, 1],
+      [0, 15],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      transform: [
+        { perspective: 1000 },
+        {
+          scale: active.value ? withTiming(0.8) : withTiming(1),
+        },
+        {
+          translateX: active.value ? withSpring(moveX) : withTiming(0),
+        },
+        { rotateY: `${rotateY}deg` },
+      ],
+      borderRadius: active.value ? withTiming(20) : withTiming(0),
+    };
+  });
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -77,7 +119,9 @@ export default function HomePage() {
     }, [accessToken, authenticatedFetch]),
   );
 
-  const handleCreateNewWhiteBoardProject = async (projectName: string) => {
+  const handleCreateNewWhiteBoardProject = async (
+    projectDto: CreateProjectDto,
+  ) => {
     try {
       const response = await authenticatedFetch('/project', {
         method: 'POST',
@@ -85,7 +129,7 @@ export default function HomePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(projectName),
+        body: JSON.stringify(projectDto),
       });
 
       if (!response.ok) {
@@ -104,69 +148,78 @@ export default function HomePage() {
   };
 
   return (
-    <View className="flex-1 bg-main">
-      <Header
-        searchText={searchText}
-        setSearchText={text => setSearchText(text)}
-      />
-      <Page>
-        <View style={{ gap: rs(20) }}>
-          <UpperTabs />
-          <Pressable
-            onPress={() => {
-              Storage.clearAll();
-              navigation.replace('Onboarding');
-            }}
-          >
-            <Text>Reset Auth</Text>
-          </Pressable>
-          <Pressable onPress={() => setCreatedModalVisible(true)}>
-            <Text>debug modal</Text>
-          </Pressable>
-          <FlatList
-            data={projects}
-            keyExtractor={project => project.projectId}
-            renderItem={({ item: project }) => (
-              <ProjectCard key={project.projectId} project={project} />
-            )}
-            contentContainerStyle={{
-              paddingBottom: rs(120),
-              padding: rs(12),
-              flexGrow: 1,
-              gap: rs(24),
+    <>
+      <Drawer active={active} />
+      <Animated.View className="flex-1 bg-main" style={animatedStyle}>
+        <View className="flex-1">
+          <Header
+            searchText={searchText}
+            setSearchText={text => setSearchText(text)}
+            active={active}
+          />
+          <Page active={active}>
+            <View style={{ gap: rs(20) }}>
+              <UpperTabs />
+              <Pressable
+                onPress={() => {
+                  Storage.clearAll();
+                  navigation.replace('Onboarding');
+                }}
+              >
+                <Text>Reset Auth</Text>
+              </Pressable>
+              <Pressable onPress={() => setCreatedModalVisible(true)}>
+                <Text>debug modal</Text>
+              </Pressable>
+              <FlatList
+                data={projects}
+                keyExtractor={project => project.projectId}
+                numColumns={2}
+                columnWrapperStyle={{ justifyContent: 'space-between' }}
+                renderItem={({ item: project }) => (
+                  <ProjectCard project={project} />
+                )}
+                contentContainerStyle={{
+                  paddingBottom: rs(100),
+                  paddingHorizontal: rs(10),
+                  gap: rs(24),
+                }}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+          </Page>
+          <FloatingActionButton
+            createNewWhiteBoard={() => setCreateVisible(true)}
+            createNewPixelBoard={function (): void {
+              throw new Error('Function not implemented.');
             }}
           />
         </View>
-      </Page>
-      {createVisible && (
-        <CreateModal
-          projectType="whiteboard"
-          handleDismiss={() => setCreateVisible(false)}
-          handleCreateWhiteBoard={projectName =>
-            handleCreateNewWhiteBoardProject(projectName)
-          }
-          // handleCreatePixelBoard={projectName =>
-          //   handleCreateNewPixelBoardProject(projectName)
-          // }
-        />
-      )}
-      {createdModalVisible && (
-        <CreatedProjectModal
-          handleDismiss={() => {
-            setCreatedModalVisible(false);
-            setCreatedProjectName('');
-            setCreatedInvitationLink('');
-          }}
-          projectName={createdProjectName}
-          invitationLink={createdInvitationLink}
-        />
-      )}
-      <FloatingActionButton
-        createNewWhiteBoard={() => setCreateVisible(true)}
-        createNewPixelBoard={function (): void {
-          throw new Error('Function not implemented.');
-        }}
-      />
-    </View>
+        {createVisible && (
+          <CreateModal
+            projectType="whiteboard"
+            handleDismiss={() => setCreateVisible(false)}
+            handleCreateWhiteBoard={projectDto =>
+              handleCreateNewWhiteBoardProject(projectDto)
+            }
+            // handleCreatePixelBoard={projectName =>
+            //   handleCreateNewPixelBoardProject(projectName)
+            // }
+          />
+        )}
+        {createdModalVisible && (
+          <CreatedProjectModal
+            handleDismiss={() => {
+              setCreatedModalVisible(false);
+              setCreatedProjectName('');
+              setCreatedInvitationLink('');
+            }}
+            projectName={createdProjectName}
+            invitationLink={createdInvitationLink}
+          />
+        )}
+        <Overlay active={active} />
+      </Animated.View>
+    </>
   );
 }

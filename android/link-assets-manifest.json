@@ -6,8 +6,16 @@
       "sha1": "37ba2b2e9e7dd74a67b8b994a1aebe333af7fc39"
     },
     {
+      "path": "src/assets/fonts/Nunito-LightItalic.ttf",
+      "sha1": "6855c33fb876932b819dc445eeb4ae3267c4ef7d"
+    },
+    {
       "path": "src/assets/fonts/Nunito-Medium.ttf",
       "sha1": "75324fedc01df018cdf436bb5beba504bd82af0d"
+    },
+    {
+      "path": "src/assets/fonts/Nunito-MediumItalic.ttf",
+      "sha1": "e582f36e0b5d13c9e3ac827bd879593dec1a06d0"
     },
     {
       "path": "src/assets/fonts/Nunito-Regular.ttf",

@@ -5,26 +5,43 @@ import { useResponsive } from '../hooks/useResponsive';
 import { Storage } from '../utils/storage';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import SearchBar from './SearchBar';
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   searchText: string;
   setSearchText: (text: string) => void;
+  active: SharedValue<boolean>;
 };
 
-export default function Header({ searchText, setSearchText }: Props) {
+export default function Header({ searchText, setSearchText, active }: Props) {
   const { rs, iconSize } = useResponsive();
+  const insets = useSafeAreaInsets();
   const isGuest = Storage.isGuestUser();
   const user = Storage.getUser();
 
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      borderTopRightRadius: active.value ? withTiming(20) : withTiming(0),
+    };
+  });
+
   return (
-    <View
+    <Animated.View
       className="bg-action"
-      style={{
-        height: rs(300),
-        paddingTop: rs(50),
-        paddingHorizontal: rs(30),
-        gap: rs(36),
-      }}
+      style={[
+        {
+          height: rs(300),
+          paddingTop: insets.top,
+          paddingHorizontal: rs(30),
+          gap: rs(36),
+        },
+        animatedStyle,
+      ]}
     >
       <View>
         <View className="flex-row justify-between items-center">
@@ -43,7 +60,14 @@ export default function Header({ searchText, setSearchText }: Props) {
               size={rs(28)}
               color="white"
             />
-            <Ionicons name="menu-outline" size={iconSize} color="white" />
+            <Ionicons
+              onPress={() => {
+                active.value = true;
+              }}
+              name="menu-outline"
+              size={iconSize}
+              color="white"
+            />
           </View>
         </View>
         <Text
@@ -62,6 +86,6 @@ export default function Header({ searchText, setSearchText }: Props) {
         handleTextChange={setSearchText}
         rightIcon={<Ionicons name="search-outline" size={24} color="#1F1F1F" />}
       />
-    </View>
+    </Animated.View>
   );
 }
