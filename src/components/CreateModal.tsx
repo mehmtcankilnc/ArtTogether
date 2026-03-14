@@ -27,6 +27,7 @@ export default function CreateModal({
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
 
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [error, setError] = useState('');
 
   const onColorChange = (color: string) => {
     setBackgroundColor(color);
@@ -50,6 +51,25 @@ export default function CreateModal({
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
     return brightness > 128;
+  };
+
+  const handleSubmit = () => {
+    if (projectName || projectName.length <= 0) {
+      setError('Project name is required!');
+      return;
+    } else {
+      if (projectType === 'whiteboard') {
+        handleCreateWhiteBoard({
+          projectName,
+          projectWidth,
+          projectHeight,
+          backgroundColor,
+        });
+      } else {
+        //handleCreatePixelBoard(projectName);
+      }
+      handleDismiss();
+    }
   };
 
   return (
@@ -97,7 +117,7 @@ export default function CreateModal({
                   color: '#1F1F1F',
                 }}
               >
-                Project Name
+                Project Name*
               </Text>
               <TextInput
                 value={projectName}
@@ -108,6 +128,17 @@ export default function CreateModal({
                 className="border border-buttonBg rounded-full color-[#1F1F1F] pl-3"
                 style={{ fontFamily: 'Nunito-LightItalic' }}
               />
+              {error && (
+                <Text
+                  style={{
+                    fontFamily: 'Nunito-SemiBold',
+                    fontSize: 10,
+                    color: '#EB4034',
+                  }}
+                >
+                  {error}
+                </Text>
+              )}
             </View>
             {/** Canvas Size */}
             <View style={{ gap: rs(6) }}>
@@ -316,23 +347,7 @@ export default function CreateModal({
               handleSubmit={() => handleDismiss()}
               text="Cancel"
             />
-            <Button
-              type="submit"
-              handleSubmit={() => {
-                if (projectType === 'whiteboard') {
-                  handleCreateWhiteBoard({
-                    projectName,
-                    projectWidth,
-                    projectHeight,
-                    backgroundColor,
-                  });
-                } else {
-                  //handleCreatePixelBoard(projectName);
-                }
-                handleDismiss();
-              }}
-              text="Create"
-            />
+            <Button type="submit" handleSubmit={handleSubmit} text="Create" />
           </View>
         </Pressable>
       </Pressable>

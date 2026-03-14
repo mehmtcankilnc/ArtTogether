@@ -2,11 +2,17 @@
 import { View, Text, Pressable } from 'react-native';
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
+import { AppStackParamList } from '../navigation/types';
 import { Project } from '../data/types';
+import {
+  Clock,
+  Information,
+  MultipleImages,
+  People,
+  RightCircleArrow,
+} from 'smooth-icon';
 
 type Props = {
   project: Project;
@@ -15,12 +21,42 @@ type Props = {
 export default function ProjectCard({ project }: Props) {
   const { rs } = useResponsive();
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+  console.log(project);
+
+  const formatLastUpdatedTime = (): string => {
+    const now = new Date();
+    const updatedAt = new Date(project?.updatedAt);
+
+    const seconds = Math.floor((now.getTime() - updatedAt.getTime()) / 1000);
+
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      day: 86400,
+      hour: 3600,
+      minute: 60,
+      second: 1,
+    };
+
+    for (const [unit, value] of Object.entries(intervals)) {
+      const count = Math.floor(seconds / value);
+      if (count >= 1) {
+        return `${count} ${unit}${count > 1 ? 's' : ''} ago`;
+      }
+    }
+
+    return 'just now';
+  };
 
   return (
     <Pressable
       onPress={() =>
-        navigation.navigate('Canvas', { projectId: project.projectId })
+        navigation.navigate('CanvasStack', {
+          screen: 'Canvas',
+          params: { projectId: project.projectId },
+        })
       }
       className="bg-secondaryBg rounded-2xl justify-center"
       style={{
@@ -42,15 +78,15 @@ export default function ProjectCard({ project }: Props) {
         >
           {project.projectName ?? 'Project Title'}
         </Text>
-        <Ionicons name="heart-outline" size={16} color="#1F1F1F" />
+        <Information size={18} color={'#1F1F1F'} />
       </View>
       <View className="w-full items-center">
-        <Ionicons name="images-outline" size={48} color="#1F1F1F" />
+        <MultipleImages size={48} color="#1F1F1F" />
       </View>
       <View className="flex-row justify-between items-center">
         <View>
           <View className="flex-row items-center" style={{ gap: rs(6) }}>
-            <Ionicons name="people-outline" size={16} color="#1F1F1F" />
+            <People size={18} color={'#1F1F1F'} />
             <Text
               style={{
                 fontFamily: 'Nunito-Regular',
@@ -62,7 +98,7 @@ export default function ProjectCard({ project }: Props) {
             </Text>
           </View>
           <View className="flex-row items-center" style={{ gap: rs(6) }}>
-            <Ionicons name="time-outline" size={16} color="#1F1F1F" />
+            <Clock size={18} color={'#1F1F1F'} />
             <Text
               style={{
                 fontFamily: 'Nunito-Regular',
@@ -70,15 +106,11 @@ export default function ProjectCard({ project }: Props) {
                 color: '#1F1F1F',
               }}
             >
-              8 hours ago
+              {formatLastUpdatedTime()}
             </Text>
           </View>
         </View>
-        <Ionicons
-          name="chevron-forward-circle-outline"
-          size={24}
-          color="#1F1F1F"
-        />
+        <RightCircleArrow color={'#1F1F1F'} />
       </View>
     </Pressable>
   );

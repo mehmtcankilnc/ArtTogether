@@ -9,22 +9,22 @@ import {
   FlatList,
   useWindowDimensions,
 } from 'react-native';
-import { useResponsive } from '../hooks/useResponsive';
-import Header from '../components/Header';
-import ProjectCard from '../components/ProjectCard';
+import { useResponsive } from '../../hooks/useResponsive';
+import Header from '../../components/Header';
+import ProjectCard from '../../components/ProjectCard';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
-import FloatingActionButton from '../components/FloatingActionButton';
-import { Storage } from '../utils/storage';
+import FloatingActionButton from '../../components/FloatingActionButton';
+import { Storage } from '../../utils/storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import CreatedProjectModal from '../components/CreatedProjectModal';
-import CreateModal from '../components/CreateModal';
-import { useAuth } from '../context/AuthContext';
-import { CreateProjectDto, Project } from '../data/types';
-import Page from '../components/Page';
-import UpperTabs from '../components/UpperTabs';
+import { RootStackParamList } from '../../navigation/types';
+import CreatedProjectModal from '../../components/CreatedProjectModal';
+import CreateModal from '../../components/CreateModal';
+import { useAuth } from '../../context/AuthContext';
+import { CreateProjectDto, Project } from '../../data/types';
+import Page from '../../components/Page';
+import UpperTabs from '../../components/UpperTabs';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -34,8 +34,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import Overlay from '../components/Overlay';
-import Drawer from '../components/Drawer';
+import Overlay from '../../components/Overlay';
+import Drawer from '../../components/Drawer';
+import ShimmerProjectCard from '../../components/ShimmerProjectCard';
 
 export default function HomePage() {
   const { rs } = useResponsive();
@@ -75,12 +76,14 @@ export default function HomePage() {
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
-
+  const [loading, setLoading] = useState(true);
   const [createVisible, setCreateVisible] = useState(false);
 
   const [createdModalVisible, setCreatedModalVisible] = useState(false);
   const [createdProjectName, setCreatedProjectName] = useState('');
   const [createdInvitationLink, setCreatedInvitationLink] = useState('');
+
+  const SKELETON_DATA = [1, 2];
 
   useFocusEffect(
     useCallback(() => {
@@ -94,6 +97,7 @@ export default function HomePage() {
       }
 
       const fetchProjects = async () => {
+        setLoading(true);
         try {
           const response = await authenticatedFetch('/project', {
             method: 'GET',
@@ -107,11 +111,12 @@ export default function HomePage() {
             return false;
           } else {
             const data = await response.json();
-            console.log(data);
             setProjects(data);
           }
         } catch (error) {
           console.error(error);
+        } finally {
+          setLoading(false);
         }
       };
 
@@ -171,14 +176,23 @@ export default function HomePage() {
               <Pressable onPress={() => setCreatedModalVisible(true)}>
                 <Text>debug modal</Text>
               </Pressable>
-              <FlatList
-                data={projects}
-                keyExtractor={project => project.projectId}
+              <FlatList<Project | number>
+                data={loading ? SKELETON_DATA : projects}
+                keyExtractor={item => {
+                  if (typeof item === 'number') {
+                    return item.toString();
+                  }
+                  return item.projectId;
+                }}
                 numColumns={2}
                 columnWrapperStyle={{ justifyContent: 'space-between' }}
-                renderItem={({ item: project }) => (
-                  <ProjectCard project={project} />
-                )}
+                renderItem={({ item }) => {
+                  if (loading || typeof item === 'number') {
+                    return <ShimmerProjectCard />;
+                  }
+
+                  return <ProjectCard project={item as Project} />;
+                }}
                 contentContainerStyle={{
                   paddingBottom: rs(100),
                   paddingHorizontal: rs(10),

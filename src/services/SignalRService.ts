@@ -8,9 +8,11 @@ import {
 import { Storage } from '../utils/storage';
 
 export interface StrokeDto {
+  id: string;
   color: string;
   width: number;
   pathData: string;
+  isEraser: boolean;
 }
 
 class SignalRService {
@@ -90,6 +92,64 @@ class SignalRService {
     } catch (error) {
       console.error('History Error:', error);
       return [];
+    }
+  }
+
+  public async undoStroke(projectId: string | undefined, strokeId: string) {
+    if (this.connection) {
+      try {
+        await this.connection.invoke('UndoStroke', projectId, strokeId);
+      } catch (error) {
+        console.error('undo stroke invoke error: ', error);
+      }
+    }
+  }
+
+  public onStrokeUndone(callback: (strokeId: string) => void) {
+    if (this.connection) {
+      this.connection.off('UndoStroke');
+
+      this.connection.on('UndoStroke', strokeId => {
+        callback(strokeId);
+      });
+    }
+  }
+
+  public async redoStroke(projectId: string | undefined, strokeId: string) {
+    if (this.connection) {
+      try {
+        await this.connection.invoke('RedoStroke', projectId, strokeId);
+      } catch (error) {
+        console.error('redo stroke invoke error: ', error);
+      }
+    }
+  }
+
+  public onStrokeRedone(callback: (stroke: StrokeDto) => void) {
+    if (this.connection) {
+      this.connection.off('RedoStroke');
+
+      this.connection.on('RedoStroke', stroke => {
+        callback(stroke);
+      });
+    }
+  }
+
+  public async clearCanvas(projectId: string | undefined) {
+    if (this.connection) {
+      try {
+        await this.connection.invoke('ClearCanvas', projectId);
+      } catch (error) {
+        console.error('clear canvas invoke error: ', error);
+      }
+    }
+  }
+
+  public onCanvasCleared(callback: (projectId: string) => void) {
+    if (this.connection) {
+      this.connection.on('CanvasCleared', projectId => {
+        callback(projectId);
+      });
     }
   }
 }

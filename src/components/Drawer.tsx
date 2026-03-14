@@ -2,11 +2,22 @@
 import { View, Text, StyleSheet, Pressable, BackHandler } from 'react-native';
 import React, { useEffect } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SharedValue } from 'react-native-reanimated';
+import {
+  Edit,
+  Flag,
+  Information,
+  Logout,
+  Mail,
+  NotificationBell,
+  QuestionMark,
+  Settings,
+  Share,
+  User,
+} from 'smooth-icon';
 
 type Props = {
   active: SharedValue<boolean>;
@@ -66,7 +77,7 @@ export default function Drawer({ active }: Props) {
               User ID: 5646
             </Text>
           </View>
-          <Ionicons name="person-circle-outline" size={64} color="#1F1F1F" />
+          <User size={64} color={'#1F1F1F'} />
         </View>
         <View className="w-full border-2 rounded-full border-action" />
         {/** Account Area */}
@@ -82,7 +93,7 @@ export default function Drawer({ active }: Props) {
           </Text>
           <View style={{ gap: rs(4), paddingLeft: rs(8) }}>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="create-outline" size={24} color="#1F1F1F" />
+              <Edit color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -94,7 +105,7 @@ export default function Drawer({ active }: Props) {
               </Text>
             </View>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="settings-outline" size={24} color="#1F1F1F" />
+              <Settings color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -113,11 +124,7 @@ export default function Drawer({ active }: Props) {
               className="flex-row items-center"
               style={{ gap: rs(12) }}
             >
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color="#1F1F1F"
-              />
+              <NotificationBell dotColor="#1F1F1F" color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -143,7 +150,7 @@ export default function Drawer({ active }: Props) {
           </Text>
           <View style={{ gap: rs(4), paddingLeft: rs(8) }}>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="help-circle-outline" size={24} color="#1F1F1F" />
+              <QuestionMark color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -155,11 +162,7 @@ export default function Drawer({ active }: Props) {
               </Text>
             </View>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons
-                name="information-circle-outline"
-                size={24}
-                color="#1F1F1F"
-              />
+              <Information color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -185,7 +188,7 @@ export default function Drawer({ active }: Props) {
           </Text>
           <View style={{ gap: rs(4), paddingLeft: rs(8) }}>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="share-social-outline" size={24} color="#1F1F1F" />
+              <Share color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -197,7 +200,7 @@ export default function Drawer({ active }: Props) {
               </Text>
             </View>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="flag-outline" size={24} color="#1F1F1F" />
+              <Flag color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -209,7 +212,7 @@ export default function Drawer({ active }: Props) {
               </Text>
             </View>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="mail-outline" size={24} color="#1F1F1F" />
+              <Mail color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',
@@ -221,7 +224,7 @@ export default function Drawer({ active }: Props) {
               </Text>
             </View>
             <View className="flex-row items-center" style={{ gap: rs(12) }}>
-              <Ionicons name="power-outline" size={24} color="#1F1F1F" />
+              <Logout color={'#1F1F1F'} />
               <Text
                 style={{
                   fontFamily: 'Nunito-Regular',

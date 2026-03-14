@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Text, View } from 'react-native';
-import { Storage } from '../utils/storage';
+import { Storage } from '../../utils/storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
+import { RootStackParamList } from '../../navigation/types';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SplashPage() {
@@ -15,9 +15,9 @@ export default function SplashPage() {
       const accessToken = Storage.getAccessToken();
 
       if (isGuest) {
-        navigation.replace('Home');
+        navigation.replace('App');
       } else if (accessToken) {
-        navigation.replace('Home');
+        navigation.replace('App');
       } else {
         console.log('No login');
         navigation.replace('Onboarding');

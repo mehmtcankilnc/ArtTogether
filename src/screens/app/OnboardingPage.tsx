@@ -2,8 +2,8 @@ import { View, Text, Pressable } from 'react-native';
 import React from 'react';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/types';
-import { useAuth } from '../context/AuthContext';
+import { RootStackParamList } from '../../navigation/types';
+import { useAuth } from '../../context/AuthContext';
 
 export default function OnboardingPage() {
   const { loginGoogle, loginGuest } = useAuth();
@@ -13,14 +13,14 @@ export default function OnboardingPage() {
   const handleGoogleSignin = async () => {
     const res = await loginGoogle();
     if (res) {
-      navigation.replace('Home');
+      navigation.replace('App');
     }
   };
 
   const handleGuestSignin = async () => {
     const res = await loginGuest();
     if (res) {
-      navigation.replace('Home');
+      navigation.replace('App');
     }
   };
 

@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { View, Pressable, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
@@ -15,6 +14,7 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
+import { Plus, Easel, Grid } from 'smooth-icon';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -171,7 +171,7 @@ export default function FloatingActionButton({
         style={[thirdIcon, thirdWidthStyle, { zIndex: 2 }]}
       >
         <View className="w-16 h-16 justify-center items-center">
-          <Ionicons name="easel-outline" size={30} color="#1F1F1F" />
+          <Easel size={30} color="#1F1F1F" />
         </View>
         <Animated.Text
           style={[
@@ -189,7 +189,7 @@ export default function FloatingActionButton({
         style={[secondIcon, secondWidthStyle, { zIndex: 2 }]}
       >
         <View className="w-16 h-16 justify-center items-center">
-          <Ionicons name="grid-outline" size={30} color="#1F1F1F" />
+          <Grid size={30} color="#1F1F1F" />
         </View>
         <Animated.Text
           style={[
@@ -221,7 +221,7 @@ export default function FloatingActionButton({
         className="bg-action absolute bottom-8 right-8 rounded-2xl h-16 w-16 justify-center items-center"
         style={[{ zIndex: 2 }, plusIcon]}
       >
-        <Ionicons name="add-outline" size={30} color="#1F1F1F" />
+        <Plus size={32} color={'#1F1F1F'} />
       </AnimatedPressable>
     </>
   );

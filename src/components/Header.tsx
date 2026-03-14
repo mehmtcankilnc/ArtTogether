@@ -3,7 +3,6 @@ import { View, Text } from 'react-native';
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { Storage } from '../utils/storage';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import SearchBar from './SearchBar';
 import Animated, {
   SharedValue,
@@ -11,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NotificationBell, Menu, Magnify } from 'smooth-icon';
 
 type Props = {
   searchText: string;
@@ -55,18 +55,17 @@ export default function Header({ searchText, setSearchText, active }: Props) {
             Welcome, {isGuest ? 'Guest User' : user?.name}
           </Text>
           <View className="flex-row items-center" style={{ gap: rs(12) }}>
-            <Ionicons
-              name="notifications-outline"
-              size={rs(28)}
-              color="white"
+            <NotificationBell
+              size={iconSize}
+              color={'#FDFDFD'}
+              dotColor={'#2D5A7B'}
             />
-            <Ionicons
+            <Menu
               onPress={() => {
                 active.value = true;
               }}
-              name="menu-outline"
               size={iconSize}
-              color="white"
+              color={'#FDFDFD'}
             />
           </View>
         </View>
@@ -84,7 +83,7 @@ export default function Header({ searchText, setSearchText, active }: Props) {
         placeholder="Search projects"
         value={searchText}
         handleTextChange={setSearchText}
-        rightIcon={<Ionicons name="search-outline" size={24} color="#1F1F1F" />}
+        rightIcon={<Magnify size={24} color={'#1F1F1F'} />}
       />
     </Animated.View>
   );
